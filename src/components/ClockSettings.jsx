@@ -1,13 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-
-const DIGITAL_FONTS = [
-  { name: 'Monospace', value: 'monospace' },
-  { name: 'Share Tech Mono', value: '"Share Tech Mono", monospace' },
-  { name: 'Orbitron', value: '"Orbitron", sans-serif' },
-  { name: 'VT323', value: '"VT323", monospace' },
-];
+import { useTheme } from 'next-themes';
 
 const TIMEZONES = Intl.supportedValuesOf('timeZone');
 
@@ -15,21 +9,19 @@ export default function ClockSettings({
   onTimezoneChange,
   onFormatChange,
   onShowDateChange,
-  onFontChange,
   onThemeChange,
   onFullscreenChange,
   onAlarmChange,
   currentTimezone,
   format24h,
   showDate,
-  currentFont,
-  theme,
   isFullscreen,
   isAlarmActive,
   alarmTime,
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const dialogRef = useRef(null);
+  const { theme, setTheme } = useTheme();
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -43,6 +35,10 @@ export default function ClockSettings({
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
+
+  const handleThemeChange = () => {
+    setTheme(theme === 'dark' ? 'light' : 'dark');
+  };
 
   return (
     <div className="fixed bottom-4 right-4">
@@ -100,23 +96,6 @@ export default function ClockSettings({
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium mb-1">
-                Digital Font
-              </label>
-              <select
-                value={currentFont}
-                onChange={(e) => onFontChange(e.target.value)}
-                className="w-full p-2 rounded border dark:bg-gray-700"
-              >
-                {DIGITAL_FONTS.map((font) => (
-                  <option key={font.value} value={font.value}>
-                    {font.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
             <div className="flex items-center space-x-2">
               <input
                 type="checkbox"
@@ -133,7 +112,7 @@ export default function ClockSettings({
                 type="checkbox"
                 id="theme"
                 checked={theme === 'dark'}
-                onChange={() => onThemeChange(theme === 'dark' ? 'light' : 'dark')}
+                onChange={handleThemeChange}
                 className="cursor-pointer"
               />
               <label htmlFor="theme" className="cursor-pointer">Dark Mode</label>

@@ -9,7 +9,7 @@ export default function Home() {
   const [timezone, setTimezone] = useState(Intl.DateTimeFormat().resolvedOptions().timeZone);
   const [format24h, setFormat24h] = useState(true);
   const [showDate, setShowDate] = useState(true);
-  const [fontFamily, setFontFamily] = useState('monospace');
+  const [fontFamily, setFontFamily] = useState('Arial, sans-serif');
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [alarmTime, setAlarmTime] = useState('');
   const [isAlarmActive, setIsAlarmActive] = useState(false);
@@ -20,7 +20,7 @@ export default function Home() {
     if (alarmTime && !isAlarmActive) {
       alarmInterval = setInterval(() => {
         const now = new Date();
-        const currentTime = now.toLocaleTimeString('fr-FR', {
+        const currentTime = now.toLocaleTimeString('en-US', {
           timeZone: timezone,
           hour12: false,
           hour: '2-digit',
@@ -61,7 +61,7 @@ export default function Home() {
   };
 
   return (
-    <ThemeProvider attribute="class">
+    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
       <div className="min-h-screen">
         <DigitalClock
           timezone={timezone}
