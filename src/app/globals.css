@@ -88,18 +88,3 @@
     @apply bg-background text-foreground;
   }
 }
-
-@font-face {
-  font-family: 'Digital-7';
-  src: url('/fonts/Digital-7.ttf') format('truetype');
-}
-
-@font-face {
-  font-family: 'LCD';
-  src: url('/fonts/LCD.ttf') format('truetype');
-}
-
-@font-face {
-  font-family: 'LED';
-  src: url('/fonts/LED.ttf') format('truetype');
-}

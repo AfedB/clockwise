@@ -1,70 +1,48 @@
-// src/app/layout.js
+import { Chivo_Mono } from 'next/font/google';
 import './globals.css';
-import { Inter } from 'next/font/google';
-import Navigation from './components/Navigation';
-import { ThemeProvider } from './components/ThemeProvider';
 
-// Import des composants shadcn/ui si nécessaire
-import { Sonner } from "@/components/ui/sonner";
-
-// Optionnel : Police Inter de Google Fonts
-const inter = Inter({ 
+const chivoMono = Chivo_Mono({
   subsets: ['latin'],
-  variable: '--font-inter',
+  display: 'swap',
 });
 
 export const metadata = {
-  title: 'Mon application',
-  description: 'Description de mon application',
+  title: 'Digital Clock | Modern Customizable Web Clock',
+  description: 'A modern digital clock with customizable themes, timezones, alarms and 12/24h format options. Perfect for everyday use.',
+  keywords: 'digital clock, web clock, time, alarm clock, customizable clock',
+  authors: [{ name: 'Your Name', url: 'https://yourwebsite.com' }],
+  viewport: 'width=device-width, initial-scale=1',
+  robots: 'index, follow',
+  openGraph: {
+    title: 'Digital Clock | Modern Customizable Web Clock',
+    description: 'A modern digital clock with customizable themes, timezones, and more',
+    url: 'https://your-domain.com',
+    siteName: 'Digital Clock App',
+    images: [
+      {
+        url: 'https://your-domain.com/og-image.jpg',
+        width: 1200,
+        height: 630,
+        alt: 'Digital Clock Preview',
+      }
+    ],
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Digital Clock App',
+    description: 'A modern digital clock with customizable features',
+    images: ['https://your-domain.com/twitter-image.jpg'],
+  },
 };
 
 export default function RootLayout({ children }) {
-  // Simuler un utilisateur connecté ou non (à remplacer par votre logique d'authentification)
-  const user = null; // Mettre la session utilisateur ici quand vous implémenterez l'auth
-
   return (
-    <html lang="fr" className={`${inter.variable}`} suppressHydrationWarning>
-      <body className="min-h-screen bg-background font-sans antialiased">
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <div className="relative flex min-h-screen flex-col">
-            <Navigation user={user} />
-            <main className="flex-1">{children}</main>
-            <footer className="border-t bg-muted/50">
-              <div className="container flex flex-col items-center justify-between gap-4 py-10 md:h-24 md:flex-row md:py-0">
-                <div className="text-center text-sm text-muted-foreground md:text-left">
-                  <p>© {new Date().getFullYear()} Mon Application. Tous droits réservés.</p>
-                </div>
-                <nav className="flex items-center gap-4 text-sm font-medium">
-                  <a 
-                    href="/legal" 
-                    className="text-muted-foreground transition-colors hover:text-foreground"
-                  >
-                    Mentions légales
-                  </a>
-                  <a 
-                    href="/privacy" 
-                    className="text-muted-foreground transition-colors hover:text-foreground"
-                  >
-                    Confidentialité
-                  </a>
-                  <a 
-                    href="/contact" 
-                    className="text-muted-foreground transition-colors hover:text-foreground"
-                  >
-                    Contact
-                  </a>
-                </nav>
-              </div>
-            </footer>
-          </div>
-          {/* <Sonner /> */}
-        </ThemeProvider>
-      </body>
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <link rel="canonical" href="https://your-domain.com" />
+      </head>
+      <body className={chivoMono.className}>{children}</body>
     </html>
   );
 }

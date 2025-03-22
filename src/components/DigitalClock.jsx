@@ -46,7 +46,7 @@ export default function DigitalClock({
 
       // Reset font size
       timeElement.style.fontSize = '20vw';
-      periodElement.style.fontSize = '6vw';
+      periodElement.style.fontSize = '3vw';
 
       // Check if content overflows
       const isOverflowing = container.scrollWidth > container.clientWidth;
@@ -170,7 +170,7 @@ export default function DigitalClock({
       <main className="flex-1 relative">
         <div className="absolute inset-0 flex flex-col items-center justify-center p-4" ref={containerRef}>
           
-            <div className="margin-auto">
+            <div className="margin-auto relative">
               <div
                 className={`time-display font-bold leading-none ${
                   isAlarmActive ? 'text-white' : ''
@@ -184,11 +184,11 @@ export default function DigitalClock({
               </div>
               {periodDisplay && (
                 <div
-                  className={`period-display ml-2 leading-none ${
+                  className={`period-display absolute -bottom-4 right-0 transform -translate-y-1/4 translate-x-1/4 ${
                     isAlarmActive ? 'text-white' : ''
                   }`}
                   style={{ 
-                    fontSize: '6vw',
+                    fontSize: '3vw',
                     lineHeight: '1'
                   }}
                 >
@@ -228,4 +228,4 @@ export default function DigitalClock({
       </div>
     </div>
   );
-} 
+}
