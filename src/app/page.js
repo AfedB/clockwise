@@ -86,7 +86,6 @@ export default function Home() {
   const handleAlarmChange = (time) => {
     if (time) {
       setAlarmTime(time);
-      setIsAlarmActive(false);
       setAlarmIntensity(0);
       
       // Demander la permission pour les notifications
@@ -96,6 +95,23 @@ export default function Home() {
     } else {
       setAlarmTime('');
       setIsAlarmActive(false);
+      setAlarmIntensity(0);
+    }
+  };
+
+  // Fonction pour gérer les changements d'état d'alarme depuis le composant Alarm
+  const handleAlarmStateChange = (isActive, time) => {
+    setIsAlarmActive(isActive);
+    if (isActive) {
+      setAlarmTime(time);
+      setAlarmIntensity(10); // Intensité maximale quand l'alarme est active
+    } else if (time === null) {
+      // Réinitialiser l'alarme complètement
+      setAlarmTime('');
+      setAlarmIntensity(0);
+    } else {
+      // Définir une nouvelle alarme (non active)
+      setAlarmTime(time);
       setAlarmIntensity(0);
     }
   };
@@ -116,6 +132,7 @@ export default function Home() {
         alarmTime={alarmTime}
         handleFullscreenChange={handleFullscreenChange}
         handleAlarmChange={handleAlarmChange}
+        handleAlarmStateChange={handleAlarmStateChange} // Passer la nouvelle fonction
       />
     </ThemeProvider>
   );
@@ -171,6 +188,7 @@ function ClockContent(props) {
         alarmTime={props.alarmTime}
         onAlarmChange={props.handleAlarmChange}
       />
+      
     </div>
   );
 }

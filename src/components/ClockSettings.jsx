@@ -21,6 +21,8 @@ export default function ClockSettings({
   const dialogRef = useRef(null);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [confirmationVisible, setConfirmationVisible] = useState(false);
+  const [isBlinking, setIsBlinking] = useState(isAlarmActive);
 
   // Initialisation avec préférence de localStorage
   useEffect(() => {
@@ -38,6 +40,24 @@ export default function ClockSettings({
       document.documentElement.classList.remove('dark');
     }
   }, []);
+
+  // Effet pour gérer le clignotement lorsque l'alarme est active
+  useEffect(() => {
+    let blinkInterval;
+    
+    if (isAlarmActive) {
+      setIsBlinking(true);
+      blinkInterval = setInterval(() => {
+        setIsBlinking(prev => !prev);
+      }, 500);
+    } else {
+      setIsBlinking(false);
+    }
+    
+    return () => {
+      if (blinkInterval) clearInterval(blinkInterval);
+    };
+  }, [isAlarmActive]);
 
   // Fonction toggle simplifiée
   const toggleDarkMode = () => {
@@ -65,6 +85,22 @@ export default function ClockSettings({
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
+
+  // Fonction pour définir l'alarme avec confirmation
+  const handleSetAlarm = (time) => {
+    if (!time) return;
+    
+    onAlarmChange(time);
+    setConfirmationVisible(true);
+    
+    // Masquer la confirmation après 3 secondes
+    setTimeout(() => setConfirmationVisible(false), 3000);
+    
+    // Demander la permission pour les notifications
+    if ('Notification' in window) {
+      Notification.requestPermission();
+    }
+  };
 
   if (!mounted) return null;
 
@@ -166,22 +202,53 @@ export default function ClockSettings({
             </div>
 
             <div className="border-t pt-4">
-              <h3 className="text-sm font-medium mb-2">Alarm</h3>
+              <h3 className="text-sm font-medium mb-2">
+                Alarme
+                {alarmTime && !isAlarmActive && (
+                  <span className="ml-2 text-sm font-normal text-green-600 dark:text-green-400">
+                    (✅ {alarmTime.substring(0, 5)})
+                  </span>
+                )}
+              </h3>
               <div className="space-y-2">
                 <input
                   type="time"
                   value={alarmTime || ""}
-                  onChange={(e) => onAlarmChange(e.target.value)}
+                  onChange={(e) => e.target.value && handleSetAlarm(e.target.value)}
                   className="w-full p-2 rounded border dark:bg-gray-700"
+                  disabled={isAlarmActive}
                 />
-                {isAlarmActive && (
+                
+                {!isAlarmActive && alarmTime ? (
                   <button
                     onClick={() => onAlarmChange(null)}
-                    className="w-full bg-red-500 hover:bg-red-600 text-white rounded p-2"
+                    className="w-full bg-gray-500 hover:bg-gray-600 text-white rounded p-2"
                   >
-                    Stop Alarm
+                    Annuler l'alarme
+                  </button>
+                ) : isAlarmActive ? (
+                  <button
+                    onClick={() => onAlarmChange(null)}
+                    className="w-full bg-red-500 hover:bg-red-600 text-white rounded p-2 animate-pulse"
+                  >
+                    Arrêter l'alarme
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => alarmTime && handleSetAlarm(alarmTime)}
+                    className="w-full bg-blue-500 hover:bg-blue-600 text-white rounded p-2"
+                    disabled={!alarmTime}
+                  >
+                    Définir l'alarme
                   </button>
                 )}
+                
+                {confirmationVisible && (
+                  <div className="mt-2 p-2 bg-green-500 text-white rounded text-center text-sm">
+                    Alarme définie pour {alarmTime?.substring(0, 5)}
+                  </div>
+                )}                
+              
               </div>
             </div>
           </div>
