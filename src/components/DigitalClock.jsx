@@ -145,7 +145,13 @@ export default function DigitalClock({
 
   const formatDate = (date) => {
     if (!date) return "";
-    return date.toLocaleDateString("en-US", { timeZone: timezone });
+    
+    return date.toLocaleDateString("en-US", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+      timeZone: timezone
+    });
   };
 
   if (!mounted) {
@@ -215,7 +221,7 @@ export default function DigitalClock({
 
           {showDate && (
             <div
-              className={`text-[5vw] mt-4 ${isAlarmActive ? "text-destructive-foreground" : "text-foreground"}`}
+              className={`text-[2vw] mt-4 ${isAlarmActive ? "text-destructive-foreground" : "text-foreground"}`}
             >
               {formatDate(time)}
             </div>

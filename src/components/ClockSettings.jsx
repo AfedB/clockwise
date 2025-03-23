@@ -136,69 +136,78 @@ export default function ClockSettings({
               </select>
             </div>
 
+            {/* Time Format transformé en boutons toggle */}
             <div>
               <label className="block text-sm font-medium mb-1">
                 Time Format
               </label>
-              <div className="flex items-center space-x-2">
-                <input
-                  type="radio"
-                  id="24h"
-                  checked={format24h}
-                  onChange={() => onFormatChange(true)}
-                  className="cursor-pointer accent-primary"
-                />
-                <label htmlFor="24h" className="cursor-pointer">
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  onClick={() => onFormatChange(true)}
+                  className={`p-2 rounded text-center transition-all duration-200 ${
+                    format24h 
+                      ? "bg-primary/80 text-primary-foreground ring-2 ring-primary/50" 
+                      : "bg-muted/50 text-muted-foreground backdrop-blur-sm"
+                  } border border-border/20`}
+                >
                   24h
-                </label>
-                <input
-                  type="radio"
-                  id="12h"
-                  checked={!format24h}
-                  onChange={() => onFormatChange(false)}
-                  className="cursor-pointer accent-primary"
-                />
-                <label htmlFor="12h" className="cursor-pointer">
+                </button>
+                <button
+                  onClick={() => onFormatChange(false)}
+                  className={`p-2 rounded text-center transition-all duration-200 ${
+                    !format24h 
+                      ? "bg-primary/80 text-primary-foreground ring-2 ring-primary/50" 
+                      : "bg-muted/50 text-muted-foreground backdrop-blur-sm"
+                  } border border-border/20`}
+                >
                   12h
-                </label>
+                </button>
               </div>
             </div>
 
-            <div className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                id="showDate"
-                checked={showDate}
-                onChange={(e) => onShowDateChange(e.target.checked)}
-                className="cursor-pointer accent-primary"
-              />
-              <label htmlFor="showDate" className="cursor-pointer">
-                Show Date
-              </label>
-            </div>
-
-            <div className="w-full mt-2">
+            {/* Show Date transformé en bouton toggle */}
+            <div>
               <button
-                onClick={toggleDarkMode}
-                className="w-full p-2 rounded bg-secondary/80 hover:bg-secondary/90 backdrop-blur-sm transition-colors border border-border/20 ring-1 ring-primary/5"
+                onClick={() => onShowDateChange(!showDate)}
+                className={`w-full p-2 rounded flex items-center justify-between transition-all duration-200 ${
+                  showDate 
+                    ? "bg-primary/80 text-primary-foreground" 
+                    : "bg-muted/50 text-muted-foreground"
+                } backdrop-blur-sm border border-border/20`}
               >
-                {theme === 'dark' 
-                  ? "☀️ Light Mode" 
-                  : "🌙 Dark Mode"}
+                <span>Show Date</span>
+                <span className="text-sm">
+                  {showDate ? "✓ ON" : "OFF"}
+                </span>
               </button>
             </div>
 
-            <div className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                id="fullscreen"
-                checked={isFullscreen}
-                onChange={onFullscreenChange}
-                className="cursor-pointer accent-primary"
-              />
-              <label htmlFor="fullscreen" className="cursor-pointer">
-                Fullscreen
-              </label>
+            {/* Dark Mode button (already modernized) */}
+            <div className="w-full">
+              <button
+                onClick={toggleDarkMode}
+                className="w-full p-2 rounded bg-secondary/80 hover:bg-secondary/90 backdrop-blur-sm transition-colors border border-border/20 ring-1 ring-primary/5 flex items-center justify-between"
+              >
+                <span>{theme === 'dark' ? "Light Mode" : "Dark Mode"}</span>
+                <span>{theme === 'dark' ? "☀️" : "🌙"}</span>
+              </button>
+            </div>
+
+            {/* Fullscreen transformé en bouton toggle */}
+            <div>
+              <button
+                onClick={onFullscreenChange}
+                className={`w-full p-2 rounded flex items-center justify-between transition-all duration-200 ${
+                  isFullscreen 
+                    ? "bg-primary/80 text-primary-foreground" 
+                    : "bg-muted/50 text-muted-foreground"
+                } backdrop-blur-sm border border-border/20`}
+              >
+                <span>Fullscreen</span>
+                <span className="text-sm">
+                  {isFullscreen ? "✓ ON" : "OFF"}
+                </span>
+              </button>
             </div>
 
             <div className="border-t border-border/40 pt-4">
