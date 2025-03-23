@@ -1,17 +1,104 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { ThemeProvider, useTheme } from 'next-themes';
-import DigitalClock from '@/components/DigitalClock';
-import ClockSettings from '@/components/ClockSettings';
+import { useState, useEffect } from "react";
+import { useTheme } from "next-themes";
+import DigitalClock from "@/components/DigitalClock";
+import ClockSettings from "@/components/ClockSettings";
+
+function ClockContent(props) {
+  const [mounted, setMounted] = useState(false);
+  const { theme } = useTheme();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Calculer la classe de couleur de fond en fonction de l'alarme
+  const getBgColorClass = () => {
+    if (!props.isAlarmActive) {
+      return "bg-background";
+    }
+
+    const intensity = props.alarmIntensity;
+    
+    // Mapper l'intensité à des classes d'opacité pour la couleur destructive
+    const intensityMap = {
+      0: "bg-destructive/10",
+      1: "bg-destructive/20",
+      2: "bg-destructive/30",
+      3: "bg-destructive/40",
+      4: "bg-destructive/50",
+      5: "bg-destructive/60",
+      6: "bg-destructive/70",
+      7: "bg-destructive/80",
+      8: "bg-destructive/90",
+      9: "bg-destructive",
+      10: "bg-destructive",
+    };
+
+    return intensityMap[Math.round(intensity)] || "bg-destructive";
+  };
+
+  // Calculer la classe de couleur du texte en fonction de l'alarme
+  const getTextColorClass = () => {
+    if (!props.isAlarmActive) {
+      return "text-foreground";
+    }
+    
+    // Pendant l'alarme, utiliser la couleur de texte de destructive
+    return "text-destructive-foreground";
+  };
+
+  // Fix hydration issue - early return if not mounted
+  if (!mounted) return null;
+
+  const bgColorClass = getBgColorClass();
+  const textColorClass = getTextColorClass();
+
+  return (
+    <div
+      className={`relative ${bgColorClass} ${textColorClass} rounded-lg shadow-lg`}
+    >
+      <div className="relative z-10">
+        <DigitalClock
+          timezone={props.timezone}
+          showDate={props.showDate}
+          format24h={props.format24h}
+          fontFamily={props.fontFamily}
+          isAlarmActive={props.isAlarmActive}
+          alarmIntensity={props.alarmIntensity}
+          alarmTime={props.alarmTime}
+        />
+        <ClockSettings
+          currentTimezone={props.timezone}
+          onTimezoneChange={props.setTimezone}
+          format24h={props.format24h}
+          onFormatChange={props.setFormat24h}
+          showDate={props.showDate}
+          onShowDateChange={props.setShowDate}
+          currentFont={props.fontFamily}
+          onFontChange={props.setFontFamily}
+          isFullscreen={props.isFullscreen}
+          onFullscreenChange={props.handleFullscreenChange}
+          isAlarmActive={props.isAlarmActive}
+          alarmTime={props.alarmTime}
+          onAlarmChange={props.handleAlarmChange}
+          onAlarmStateChange={props.handleAlarmStateChange}
+        />
+      </div>
+    </div>
+  );
+}
 
 export default function Home() {
-  const [timezone, setTimezone] = useState(Intl.DateTimeFormat().resolvedOptions().timeZone);
+  const [timezone, setTimezone] = useState(
+    Intl.DateTimeFormat().resolvedOptions().timeZone
+  );
   const [format24h, setFormat24h] = useState(true);
   const [showDate, setShowDate] = useState(true);
-  const [fontFamily, setFontFamily] = useState('Arial, sans-serif');
+  const [fontFamily, setFontFamily] = useState("Arial, sans-serif");
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [alarmTime, setAlarmTime] = useState('');
+  const [alarmTime, setAlarmTime] = useState("");
   const [isAlarmActive, setIsAlarmActive] = useState(false);
   const [alarmIntensity, setAlarmIntensity] = useState(0);
   const [isMounted, setIsMounted] = useState(false);
@@ -27,41 +114,35 @@ export default function Home() {
     if (alarmTime) {
       alarmInterval = setInterval(() => {
         const now = new Date();
-        
-        // Format actuel pour correspondre au format de l'alarme
-        const currentHours = now.getHours().toString().padStart(2, '0');
-        const currentMinutes = now.getMinutes().toString().padStart(2, '0');
+        const currentHours = now.getHours().toString().padStart(2, "0");
+        const currentMinutes = now.getMinutes().toString().padStart(2, "0");
+        const currentSeconds = now.getSeconds().toString().padStart(2, "0");
         const currentHM = `${currentHours}:${currentMinutes}`;
+        const alarmHM = alarmTime.substring(0, 5);
         
-        // Nombre total de secondes de l'heure actuelle
-        const currentSeconds = now.getSeconds();
-        const totalCurrentSeconds = parseInt(currentHours) * 3600 + parseInt(currentMinutes) * 60 + currentSeconds;
+        // Calculer le temps jusqu'à l'alarme en secondes
+        const [alarmH, alarmM] = alarmHM.split(':').map(Number);
+        const [nowH, nowM, nowS] = [Number(currentHours), Number(currentMinutes), Number(currentSeconds)];
         
-        // Nombre total de secondes de l'alarme
-        const [alarmHours, alarmMinutes] = alarmTime.split(':').map(Number);
-        const totalAlarmSeconds = alarmHours * 3600 + alarmMinutes * 60;
+        const alarmTotalSeconds = alarmH * 3600 + alarmM * 60;
+        const nowTotalSeconds = nowH * 3600 + nowM * 60 + nowS;
         
-        // Différence en secondes (avec gestion du passage à minuit)
-        let secondsDiff = totalAlarmSeconds - totalCurrentSeconds;
-        if (secondsDiff < 0) secondsDiff += 24 * 3600; // Si l'alarme est pour le lendemain
+        // Gérer le cas où l'alarme est pour le jour suivant
+        let secondsUntilAlarm = alarmTotalSeconds - nowTotalSeconds;
+        if (secondsUntilAlarm < 0) secondsUntilAlarm += 24 * 3600;
         
-        // 10 secondes avant l'alarme - commencer la transition progressive
-        if (secondsDiff <= 10 && secondsDiff > 0) {
-          // Intensité de 0 à 10 (10 = max)
-          setAlarmIntensity(10 - secondsDiff);
+        // Si moins de 10 secondes avant l'alarme, commencer à augmenter l'intensité
+        if (secondsUntilAlarm <= 10 && secondsUntilAlarm > 0) {
           setIsAlarmActive(true);
-        } 
-        // À l'heure exacte de l'alarme
-        else if (currentHM === alarmTime && currentSeconds === 0) {
+          const intensity = 10 - secondsUntilAlarm; // 0->9 au fur et à mesure
+          console.log(`Alarm in ${secondsUntilAlarm} seconds. Intensity: ${intensity}`);
+          setAlarmIntensity(intensity);
+        }
+        // Si c'est l'heure exacte de l'alarme
+        else if (currentHM === alarmHM) {
+          console.log("Alarm triggered!", currentHM, alarmTime);
+          setIsAlarmActive(true);
           setAlarmIntensity(10); // Intensité maximale
-          setIsAlarmActive(true);
-          // Notification au besoin
-          if ('Notification' in window && Notification.permission === 'granted') {
-            new Notification('Alarme !', {
-              body: `Il est ${alarmTime}`,
-              icon: '/clock-icon.png'
-            });
-          }
         }
       }, 1000);
     }
@@ -73,9 +154,15 @@ export default function Home() {
     };
   }, [alarmTime, timezone]);
 
+  useEffect(() => {
+    console.log("Alarm status updated:", isAlarmActive, "intensity:", alarmIntensity);
+  }, [isAlarmActive, alarmIntensity]);
+
   const handleFullscreenChange = () => {
     if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen();
+      document.documentElement.requestFullscreen().catch((err) => {
+        console.error(`Error attempting to enable fullscreen: ${err.message}`);
+      });
       setIsFullscreen(true);
     } else {
       document.exitFullscreen();
@@ -84,16 +171,17 @@ export default function Home() {
   };
 
   const handleAlarmChange = (time) => {
+    console.log(`Alarm changed to: ${time}`);
     if (time) {
       setAlarmTime(time);
       setAlarmIntensity(0);
-      
+
       // Demander la permission pour les notifications
-      if ('Notification' in window) {
+      if ("Notification" in window) {
         Notification.requestPermission();
       }
     } else {
-      setAlarmTime('');
+      setAlarmTime("");
       setIsAlarmActive(false);
       setAlarmIntensity(0);
     }
@@ -101,94 +189,64 @@ export default function Home() {
 
   // Fonction pour gérer les changements d'état d'alarme depuis le composant Alarm
   const handleAlarmStateChange = (isActive, time) => {
-    setIsAlarmActive(isActive);
-    if (isActive) {
-      setAlarmTime(time);
-      setAlarmIntensity(10); // Intensité maximale quand l'alarme est active
-    } else if (time === null) {
+    console.log(`Alarm state changed: active=${isActive}, time=${time}`);
+    if (time === null || time === "") {
       // Réinitialiser l'alarme complètement
-      setAlarmTime('');
+      setAlarmTime("");
+      setIsAlarmActive(false);
       setAlarmIntensity(0);
+    } else if (isActive) {
+      // Activer une alarme
+      setAlarmTime(time);
+      // Vérifier si c'est l'heure actuelle pour décider d'activer l'alarme immédiatement
+      const now = new Date();
+      const currentHours = now.getHours().toString().padStart(2, "0");
+      const currentMinutes = now.getMinutes().toString().padStart(2, "0");
+      const currentHM = `${currentHours}:${currentMinutes}`;
+
+      if (currentHM === time) {
+        // L'heure actuelle correspond à l'heure d'alarme
+        setIsAlarmActive(true);
+        setAlarmIntensity(10);
+      } else {
+        // L'alarme est programmée pour plus tard
+        setIsAlarmActive(false);
+        setAlarmIntensity(0);
+      }
     } else {
       // Définir une nouvelle alarme (non active)
       setAlarmTime(time);
+      setIsAlarmActive(false);
       setAlarmIntensity(0);
     }
+    console.log(
+      "Setting alarm active:",
+      isAlarmActive,
+      "intensity:",
+      alarmIntensity
+    );
   };
 
-  return (
-    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-      <ClockContent 
-        timezone={timezone}
-        format24h={format24h}
-        showDate={showDate}
-        setTimezone={setTimezone}
-        setFormat24h={setFormat24h}
-        setShowDate={setShowDate}
-        fontFamily={fontFamily}
-        isAlarmActive={isAlarmActive}
-        alarmIntensity={alarmIntensity}
-        isFullscreen={isFullscreen}
-        alarmTime={alarmTime}
-        handleFullscreenChange={handleFullscreenChange}
-        handleAlarmChange={handleAlarmChange}
-        handleAlarmStateChange={handleAlarmStateChange} // Passer la nouvelle fonction
-      />
-    </ThemeProvider>
-  );
-}
+  // Prevent rendering until client-side rendering is ready
+  if (!isMounted) return null;
 
-// Composant enfant qui utilise useTheme correctement
-function ClockContent(props) {
-  const { theme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-  
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-  
-  const handleThemeChange = (newTheme) => {
-    setTheme(newTheme);
-  };
-  
-  // Style pour la couleur de fond qui s'intensifie
-  const backgroundStyle = props.isAlarmActive 
-    ? { 
-        background: `rgba(220, 38, 38, ${props.alarmIntensity / 10})`, 
-        transition: 'background 1s ease' 
-      } 
-    : {};
-  
-  if (!mounted) return null; // Éviter le flash pendant l'hydratation
-  
   return (
-    <div className="min-h-screen relative" style={backgroundStyle}>
-      <DigitalClock
-        timezone={props.timezone}
-        showDate={props.showDate}
-        format24h={props.format24h}
-        fontFamily={props.fontFamily}
-        isAlarmActive={props.isAlarmActive}
-        alarmIntensity={props.alarmIntensity}
-      />
-      <ClockSettings
-        currentTimezone={props.timezone}
-        onTimezoneChange={props.setTimezone}
-        format24h={props.format24h}
-        onFormatChange={props.setFormat24h}
-        showDate={props.showDate}
-        onShowDateChange={props.setShowDate}
-        currentFont={props.fontFamily}
-        onFontChange={props.setFontFamily}
-        onThemeChange={handleThemeChange}
-        theme={theme} // Utiliser directement le thème de useTheme()
-        isFullscreen={props.isFullscreen}
-        onFullscreenChange={props.handleFullscreenChange}
-        isAlarmActive={props.isAlarmActive}
-        alarmTime={props.alarmTime}
-        onAlarmChange={props.handleAlarmChange}
-      />
-      
-    </div>
+    <ClockContent
+      timezone={timezone}
+      format24h={format24h}
+      showDate={showDate}
+      setTimezone={setTimezone}
+      setFormat24h={setFormat24h}
+      setShowDate={setShowDate}
+      fontFamily={fontFamily}
+      setFontFamily={setFontFamily}
+      isAlarmActive={isAlarmActive}
+      alarmIntensity={alarmIntensity}
+      isFullscreen={isFullscreen}
+      alarmTime={alarmTime}
+      handleFullscreenChange={handleFullscreenChange}
+      handleAlarmChange={handleAlarmChange}
+      handleAlarmStateChange={handleAlarmStateChange}
+    />
   );
 }

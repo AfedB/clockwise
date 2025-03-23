@@ -1,5 +1,6 @@
 import { Chivo_Mono } from "next/font/google";
 import "./globals.css";
+import { ThemeProvider } from "@/components/theme-provider";
 
 const chivoMono = Chivo_Mono({
   subsets: ["latin"],
@@ -53,7 +54,16 @@ export default function RootLayout({ children }) {
         ></script>
         {/* <link rel="canonical" href="https://your-domain.com" /> */}
       </head>
-      <body className={chivoMono.className}>{children}</body>
+      <body className={chivoMono.className}>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          {children}
+        </ThemeProvider>
+      </body>
     </html>
   );
 }

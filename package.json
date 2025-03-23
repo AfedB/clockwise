@@ -28,7 +28,7 @@
     "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.477.0",
     "next": "15.1.7",
-    "next-themes": "^0.4.4",
+    "next-themes": "^0.4.6",
     "pino": "^8.17.2",
     "pino-pretty": "^10.3.1",
     "react": "^19.0.0",

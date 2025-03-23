@@ -39,7 +39,9 @@
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
 
-    --radius: 0.5rem
+    --radius: 0.5rem;
+    --alarm-color-light: rgba(255, 0, 0, 1);
+    --alarm-color-dark: rgba(220, 38, 38, 1);
   }
 
   .dark {
@@ -76,7 +78,7 @@
     --chart-2: 160 60% 45%;
     --chart-3: 30 80% 55%;
     --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%
+    --chart-5: 340 75% 55%;
   }
 }
 
@@ -87,4 +89,30 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+.alarm-overlay {
+  position: relative;
+}
+
+.alarm-overlay::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  transition: opacity 0.5s ease, background-color 0.5s ease; /* Allongez un peu la transition */
+  opacity: var(--alarm-opacity, 0);
+  background-color: var(--current-alarm-color);
+  z-index: 5; /* Assurez-vous qu'il est au-dessus des autres éléments mais en dessous du contenu principal */
+}
+
+[data-theme='light'] .alarm-overlay::before {
+  background-color: rgba(255, 0, 0, 1);
+}
+
+[data-theme='dark'] .alarm-overlay::before {
+  background-color: rgba(220, 38, 38, 1);
 }
