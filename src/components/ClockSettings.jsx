@@ -59,6 +59,26 @@ export default function ClockSettings({
     };
   }, [isAlarmActive]);
 
+  // Ajouter cette fonction useEffect après les autres useEffect
+  useEffect(() => {
+    // Vérifie si une alarme est définie lors d'un changement de fuseau horaire
+    if (alarmTime) {
+      onAlarmChange(null); // Annule l'alarme existante
+      setConfirmationVisible(true);
+      // Affiche une notification discrète
+      if ('Notification' in window && Notification.permission === 'granted') {
+        new Notification('Timezone Change', {
+          body: 'Your alarm has been cancelled. Please set a new alarm for the current timezone.',
+          icon: '/clock-icon.png' // Assurez-vous d'avoir une icône ou retirez cette ligne
+        });
+      }
+      
+      setTimeout(() => {
+        setConfirmationVisible(false);
+      }, 3000);
+    }
+  }, [currentTimezone]); // Se déclenche à chaque changement de fuseau horaire
+
   // Fonction toggle simplifiée
   const toggleDarkMode = () => {
     const newDarkMode = !isDarkMode;
@@ -183,8 +203,8 @@ export default function ClockSettings({
                 className="w-full p-2 rounded bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 transition-colors"
               >
                 {isDarkMode 
-                  ? "☀️ Mode Clair" 
-                  : "🌙 Mode Sombre"}
+                  ? "☀️ Light Mode" 
+                  : "🌙 Dark Mode"}
               </button>
             </div>
 
@@ -203,7 +223,7 @@ export default function ClockSettings({
 
             <div className="border-t pt-4">
               <h3 className="text-sm font-medium mb-2">
-                Alarme
+                Alarm
                 {alarmTime && !isAlarmActive && (
                   <span className="ml-2 text-sm font-normal text-green-600 dark:text-green-400">
                     (✅ {alarmTime.substring(0, 5)})
@@ -224,14 +244,14 @@ export default function ClockSettings({
                     onClick={() => onAlarmChange(null)}
                     className="w-full bg-gray-500 hover:bg-gray-600 text-white rounded p-2"
                   >
-                    Annuler l'alarme
+                    Cancel Alarm
                   </button>
                 ) : isAlarmActive ? (
                   <button
                     onClick={() => onAlarmChange(null)}
                     className="w-full bg-red-500 hover:bg-red-600 text-white rounded p-2 animate-pulse"
                   >
-                    Arrêter l'alarme
+                    Stop Alarm
                   </button>
                 ) : (
                   <button
@@ -239,13 +259,15 @@ export default function ClockSettings({
                     className="w-full bg-blue-500 hover:bg-blue-600 text-white rounded p-2"
                     disabled={!alarmTime}
                   >
-                    Définir l'alarme
+                    Set Alarm
                   </button>
                 )}
                 
                 {confirmationVisible && (
                   <div className="mt-2 p-2 bg-green-500 text-white rounded text-center text-sm">
-                    Alarme définie pour {alarmTime?.substring(0, 5)}
+                    {alarmTime 
+                      ? `Alarm set for ${alarmTime?.substring(0, 5)}`
+                      : "Alarm cancelled due to timezone change"}
                   </div>
                 )}                
               
