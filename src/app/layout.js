@@ -6,12 +6,16 @@ const chivoMono = Chivo_Mono({
   display: 'swap',
 });
 
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+};
+
 export const metadata = {
   title: 'Digital Clock | Modern Customizable Web Clock',
   description: 'A modern digital clock with customizable themes, timezones, alarms and 12/24h format options. Perfect for everyday use.',
   keywords: 'digital clock, web clock, time, alarm clock, customizable clock',
   authors: [{ name: 'Your Name', url: 'https://yourwebsite.com' }],
-  viewport: 'width=device-width, initial-scale=1',
   robots: 'index, follow',
   openGraph: {
     title: 'Digital Clock | Modern Customizable Web Clock',

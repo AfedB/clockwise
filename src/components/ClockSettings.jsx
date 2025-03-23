@@ -1,15 +1,13 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useRef } from 'react';
-import { useTheme } from 'next-themes';
+import { useState, useEffect, useRef } from "react";
 
-const TIMEZONES = Intl.supportedValuesOf('timeZone');
+const TIMEZONES = Intl.supportedValuesOf("timeZone");
 
 export default function ClockSettings({
   onTimezoneChange,
   onFormatChange,
   onShowDateChange,
-  onThemeChange,
   onFullscreenChange,
   onAlarmChange,
   currentTimezone,
@@ -21,7 +19,39 @@ export default function ClockSettings({
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const dialogRef = useRef(null);
-  const { theme, setTheme } = useTheme();
+  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  // Initialisation avec préférence de localStorage
+  useEffect(() => {
+    setMounted(true);
+    const savedTheme = localStorage.getItem('theme');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    
+    // Utiliser la préférence enregistrée ou système
+    const isDark = savedTheme === 'dark' || (savedTheme === null && prefersDark);
+    
+    setIsDarkMode(isDark);
+    if (isDark) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, []);
+
+  // Fonction toggle simplifiée
+  const toggleDarkMode = () => {
+    const newDarkMode = !isDarkMode;
+    setIsDarkMode(newDarkMode);
+    
+    if (newDarkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+    
+    localStorage.setItem('theme', newDarkMode ? 'dark' : 'light');
+  };
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -30,15 +60,13 @@ export default function ClockSettings({
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
 
-  const handleThemeChange = () => {
-    setTheme(theme === 'dark' ? 'light' : 'dark');
-  };
+  if (!mounted) return null;
 
   return (
     <div className="fixed bottom-4 right-4">
@@ -50,7 +78,7 @@ export default function ClockSettings({
       </button>
 
       {isOpen && (
-        <div 
+        <div
           ref={dialogRef}
           className="absolute bottom-16 right-0 bg-white dark:bg-gray-800 p-4 rounded-lg shadow-xl w-64 z-50"
         >
@@ -84,7 +112,9 @@ export default function ClockSettings({
                   onChange={() => onFormatChange(true)}
                   className="cursor-pointer"
                 />
-                <label htmlFor="24h" className="cursor-pointer">24h</label>
+                <label htmlFor="24h" className="cursor-pointer">
+                  24h
+                </label>
                 <input
                   type="radio"
                   id="12h"
@@ -92,7 +122,9 @@ export default function ClockSettings({
                   onChange={() => onFormatChange(false)}
                   className="cursor-pointer"
                 />
-                <label htmlFor="12h" className="cursor-pointer">12h</label>
+                <label htmlFor="12h" className="cursor-pointer">
+                  12h
+                </label>
               </div>
             </div>
 
@@ -104,18 +136,20 @@ export default function ClockSettings({
                 onChange={(e) => onShowDateChange(e.target.checked)}
                 className="cursor-pointer"
               />
-              <label htmlFor="showDate" className="cursor-pointer">Show Date</label>
+              <label htmlFor="showDate" className="cursor-pointer">
+                Show Date
+              </label>
             </div>
 
-            <div className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                id="theme"
-                checked={theme === 'dark'}
-                onChange={handleThemeChange}
-                className="cursor-pointer"
-              />
-              <label htmlFor="theme" className="cursor-pointer">Dark Mode</label>
+            <div className="w-full mt-2">
+              <button
+                onClick={toggleDarkMode}
+                className="w-full p-2 rounded bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 transition-colors"
+              >
+                {isDarkMode 
+                  ? "☀️ Mode Clair" 
+                  : "🌙 Mode Sombre"}
+              </button>
             </div>
 
             <div className="flex items-center space-x-2">
@@ -126,7 +160,9 @@ export default function ClockSettings({
                 onChange={onFullscreenChange}
                 className="cursor-pointer"
               />
-              <label htmlFor="fullscreen" className="cursor-pointer">Fullscreen</label>
+              <label htmlFor="fullscreen" className="cursor-pointer">
+                Fullscreen
+              </label>
             </div>
 
             <div className="border-t pt-4">
@@ -134,7 +170,7 @@ export default function ClockSettings({
               <div className="space-y-2">
                 <input
                   type="time"
-                  value={alarmTime || ''}
+                  value={alarmTime || ""}
                   onChange={(e) => onAlarmChange(e.target.value)}
                   className="w-full p-2 rounded border dark:bg-gray-700"
                 />
@@ -153,4 +189,4 @@ export default function ClockSettings({
       )}
     </div>
   );
-} 
+}
