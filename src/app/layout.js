@@ -52,7 +52,7 @@ export default function RootLayout({ children }) {
           src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4837266905158444"
           crossorigin="anonymous"
         ></script>
-        {/* <link rel="canonical" href="https://your-domain.com" /> */}
+        <meta name="google-adsense-account" content="ca-pub-4837266905158444"></meta>
       </head>
       <body className={chivoMono.className}>
         <ThemeProvider
