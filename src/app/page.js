@@ -90,7 +90,37 @@ function ClockContent(props) {
   );
 }
 
+// Fonction pour charger les préférences depuis localStorage
+const loadPreferences = () => {
+  if (typeof window === 'undefined') return null;
+  
+  try {
+    const savedPrefs = localStorage.getItem('clockwisePreferences');
+    if (savedPrefs) {
+      return JSON.parse(savedPrefs);
+    }
+  } catch (error) {
+    console.error('Erreur lors du chargement des préférences:', error);
+  }
+  return null;
+};
+
+// Fonction pour sauvegarder les préférences dans localStorage
+const savePreferences = (preferences) => {
+  if (typeof window === 'undefined') return;
+  
+  try {
+    localStorage.setItem('clockwisePreferences', JSON.stringify(preferences));
+  } catch (error) {
+    console.error('Erreur lors de la sauvegarde des préférences:', error);
+  }
+};
+
 export default function Home() {
+  // État pour contrôler le montage du composant côté client
+  const [isMounted, setIsMounted] = useState(false);
+  
+  // États pour les préférences de l'horloge
   const [timezone, setTimezone] = useState(
     Intl.DateTimeFormat().resolvedOptions().timeZone
   );
@@ -98,20 +128,47 @@ export default function Home() {
   const [showDate, setShowDate] = useState(true);
   const [fontFamily, setFontFamily] = useState("Arial, sans-serif");
   const [isFullscreen, setIsFullscreen] = useState(false);
+  
+  // États pour l'alarme
   const [alarmTime, setAlarmTime] = useState("");
   const [isAlarmActive, setIsAlarmActive] = useState(false);
   const [alarmIntensity, setAlarmIntensity] = useState(0);
-  const [isMounted, setIsMounted] = useState(false);
+  const [alarmTimeout, setAlarmTimeout] = useState(null);
 
-  // S'assurer que le code côté client est exécuté après le montage
+  // Charger les préférences au montage du composant
   useEffect(() => {
     setIsMounted(true);
+    
+    const prefs = loadPreferences();
+    if (prefs) {
+      if (prefs.timezone) setTimezone(prefs.timezone);
+      if (prefs.format24h !== undefined) setFormat24h(prefs.format24h);
+      if (prefs.showDate !== undefined) setShowDate(prefs.showDate);
+      if (prefs.fontFamily) setFontFamily(prefs.fontFamily);
+      if (prefs.alarmTime) setAlarmTime(prefs.alarmTime);
+    }
   }, []);
 
+  // Enregistrer les préférences lorsqu'elles changent
+  useEffect(() => {
+    if (!isMounted) return;
+    
+    const preferences = {
+      timezone,
+      format24h,
+      showDate,
+      fontFamily,
+      alarmTime
+    };
+    
+    savePreferences(preferences);
+  }, [timezone, format24h, showDate, fontFamily, alarmTime, isMounted]);
+
+  // Gérer l'alarme
   useEffect(() => {
     let alarmInterval;
 
-    if (alarmTime) {
+    if (alarmTime && isMounted) {
       alarmInterval = setInterval(() => {
         const now = new Date();
         const currentHours = now.getHours().toString().padStart(2, "0");
@@ -134,29 +191,54 @@ export default function Home() {
         // Si moins de 10 secondes avant l'alarme, commencer à augmenter l'intensité
         if (secondsUntilAlarm <= 10 && secondsUntilAlarm > 0) {
           setIsAlarmActive(true);
-          const intensity = 10 - secondsUntilAlarm; // 0->9 au fur et à mesure
-          console.log(`Alarm in ${secondsUntilAlarm} seconds. Intensity: ${intensity}`);
+          const intensity = 10 - secondsUntilAlarm; // 0->10 au fur et à mesure
           setAlarmIntensity(intensity);
         }
-        // Si c'est l'heure exacte de l'alarme
-        else if (currentHM === alarmHM) {
-          console.log("Alarm triggered!", currentHM, alarmTime);
+        // Si c'est l'heure exacte de l'alarme ou après l'heure d'alarme mais dans la même minute
+        else if (currentHM === alarmHM || 
+                 (nowH === alarmH && nowM === alarmM && nowS < 30)) {
           setIsAlarmActive(true);
           setAlarmIntensity(10); // Intensité maximale
+          
+          // Désactiver l'alarme après 60 secondes
+          if (!alarmTimeout) {
+            const timeout = setTimeout(() => {
+              setIsAlarmActive(false);
+              setAlarmIntensity(0);
+              setAlarmTimeout(null);
+            }, 60000);
+            setAlarmTimeout(timeout);
+          }
+        } else {
+          // Si l'alarme n'est pas active et qu'on n'est pas dans les 10 secondes précédentes
+          if (secondsUntilAlarm > 10 && isAlarmActive) {
+            setIsAlarmActive(false);
+            setAlarmIntensity(0);
+          }
         }
       }, 1000);
+    } else if (!alarmTime) {
+      // Si l'alarme est désactivée, réinitialiser les états
+      setIsAlarmActive(false);
+      setAlarmIntensity(0);
+      
+      // Effacer le timeout s'il existe
+      if (alarmTimeout) {
+        clearTimeout(alarmTimeout);
+        setAlarmTimeout(null);
+      }
     }
 
     return () => {
       if (alarmInterval) {
         clearInterval(alarmInterval);
       }
+      if (alarmTimeout) {
+        clearTimeout(alarmTimeout);
+        setAlarmTimeout(null);
+      }
     };
-  }, [alarmTime, timezone]);
-
-  useEffect(() => {
-    console.log("Alarm status updated:", isAlarmActive, "intensity:", alarmIntensity);
-  }, [isAlarmActive, alarmIntensity]);
+  }, [alarmTime, timezone, isMounted, isAlarmActive, alarmTimeout]);
 
   const handleFullscreenChange = () => {
     if (!document.fullscreenElement) {
@@ -171,30 +253,43 @@ export default function Home() {
   };
 
   const handleAlarmChange = (time) => {
-    console.log(`Alarm changed to: ${time}`);
     if (time) {
       setAlarmTime(time);
       setAlarmIntensity(0);
-
-      // Demander la permission pour les notifications
-      if ("Notification" in window) {
-        Notification.requestPermission();
+      setIsAlarmActive(false);
+      
+      // Effacer le timeout existant s'il y en a un
+      if (alarmTimeout) {
+        clearTimeout(alarmTimeout);
+        setAlarmTimeout(null);
       }
     } else {
+      // Annuler l'alarme
       setAlarmTime("");
       setIsAlarmActive(false);
       setAlarmIntensity(0);
+      
+      // Effacer le timeout s'il existe
+      if (alarmTimeout) {
+        clearTimeout(alarmTimeout);
+        setAlarmTimeout(null);
+      }
     }
   };
 
   // Fonction pour gérer les changements d'état d'alarme depuis le composant Alarm
   const handleAlarmStateChange = (isActive, time) => {
-    console.log(`Alarm state changed: active=${isActive}, time=${time}`);
     if (time === null || time === "") {
       // Réinitialiser l'alarme complètement
       setAlarmTime("");
       setIsAlarmActive(false);
       setAlarmIntensity(0);
+      
+      // Effacer le timeout s'il existe
+      if (alarmTimeout) {
+        clearTimeout(alarmTimeout);
+        setAlarmTimeout(null);
+      }
     } else if (isActive) {
       // Activer une alarme
       setAlarmTime(time);
@@ -204,7 +299,7 @@ export default function Home() {
       const currentMinutes = now.getMinutes().toString().padStart(2, "0");
       const currentHM = `${currentHours}:${currentMinutes}`;
 
-      if (currentHM === time) {
+      if (currentHM === time.substring(0, 5)) {
         // L'heure actuelle correspond à l'heure d'alarme
         setIsAlarmActive(true);
         setAlarmIntensity(10);
@@ -219,12 +314,6 @@ export default function Home() {
       setIsAlarmActive(false);
       setAlarmIntensity(0);
     }
-    console.log(
-      "Setting alarm active:",
-      isAlarmActive,
-      "intensity:",
-      alarmIntensity
-    );
   };
 
   // Prevent rendering until client-side rendering is ready

@@ -1,10 +1,18 @@
 import { Chivo_Mono } from "next/font/google";
+import { Inter as FontSans } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
+import { cn } from "@/lib/utils";
+import ClientLayout from "./client-layout";
 
 const chivoMono = Chivo_Mono({
   subsets: ["latin"],
-  display: "swap",
+  weight: ["400", "700"],
+});
+
+const fontSans = FontSans({
+  subsets: ["latin"],
+  variable: "--font-sans",
 });
 
 export const viewport = {
@@ -54,16 +62,16 @@ export default function RootLayout({ children }) {
         ></script>
         <meta name="google-adsense-account" content="ca-pub-4837266905158444"></meta>
       </head>
-      <body className={chivoMono.className}>
+      <body className={cn("antialiased", chivoMono.className)}>
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
           enableSystem
           disableTransitionOnChange
         >
-          {children}
+          <ClientLayout>{children}</ClientLayout>
         </ThemeProvider>
       </body>
     </html>
   );
-}
+} 

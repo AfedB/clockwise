@@ -8,13 +8,14 @@ export default function DigitalClock({
   showDate = true,
   format24h = true,
   isAlarmActive = false,
+  alarmIntensity = 0,
   alarmTime,
+  fontFamily = "Arial, sans-serif",
 }) {
   const [mounted, setMounted] = useState(false);
   const [time, setTime] = useState(null);
   const { theme, setTheme } = useTheme();
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [alarmIntensity, setAlarmIntensity] = useState(0);
   const [isAlarmSet, setIsAlarmSet] = useState(false);
   const containerRef = useRef(null);
 
@@ -42,11 +43,11 @@ export default function DigitalClock({
       const timeElement = container.querySelector(".time-display");
       const periodElement = container.querySelector(".period-display");
 
-      if (!timeElement || !periodElement) return;
+      if (!timeElement) return;
 
       // Reset font size
       timeElement.style.fontSize = "20vw";
-      periodElement.style.fontSize = "3vw";
+      if (periodElement) periodElement.style.fontSize = "3vw";
 
       // Check if content overflows
       const isOverflowing = container.scrollWidth > container.clientWidth;
@@ -61,7 +62,7 @@ export default function DigitalClock({
           periodSize = timeSize * 0.3; // Maintain ratio
 
           timeElement.style.fontSize = `${timeSize}vw`;
-          periodElement.style.fontSize = `${periodSize}vw`;
+          if (periodElement) periodElement.style.fontSize = `${periodSize}vw`;
         }
       }
     };
@@ -71,16 +72,18 @@ export default function DigitalClock({
     return () => window.removeEventListener("resize", adjustFontSize);
   }, [time, format24h]);
 
-
   useEffect(() => {
     setIsAlarmSet(!!alarmTime);
   }, [alarmTime]);
 
+  // Mise à jour des variables CSS pour l'effet d'alarme
   useEffect(() => {
     if (isAlarmActive) {
+      // Clamp l'intensité entre 0 et 10
+      const intensity = Math.max(0, Math.min(10, alarmIntensity)) / 10;
       document.documentElement.style.setProperty(
         "--alarm-opacity",
-        alarmIntensity / 10
+        intensity.toString()
       );
       document.documentElement.style.setProperty(
         "--current-alarm-color",
@@ -95,6 +98,7 @@ export default function DigitalClock({
     if (!isAlarmActive) return "bg-background";
 
     // Mapper l'intensité (0-10) à des classes d'opacité pour la couleur destructive
+    const intensity = Math.round(Math.max(0, Math.min(10, alarmIntensity)));
     const intensityMap = {
       0: "bg-destructive/10",
       1: "bg-destructive/20",
@@ -105,11 +109,11 @@ export default function DigitalClock({
       6: "bg-destructive/70",
       7: "bg-destructive/80",
       8: "bg-destructive/90",
-      9: "bg-destructive",
+      9: "bg-destructive/95",
       10: "bg-destructive", // Intensité maximale
     };
 
-    return intensityMap[Math.round(alarmIntensity)] || "bg-destructive";
+    return intensityMap[intensity] || "bg-destructive";
   };
 
   const toggleFullscreen = () => {
@@ -172,16 +176,18 @@ export default function DigitalClock({
 
   const timeDisplay = format24h ? formatTime(time) : formatTime(time).time;
   const periodDisplay = format24h ? null : formatTime(time).period;
+  const bgColorClass = getAlarmColor();
+  const textColorClass = isAlarmActive ? "text-destructive-foreground" : "text-foreground";
 
   return (
-    <div className={`min-h-screen flex flex-col ${getAlarmColor()}`}>
+    <div className={`min-h-screen flex flex-col ${bgColorClass} transition-colors duration-300`}>
       {/* Top ad banner */}
       <div
         className={`h-[10vh] flex items-center justify-center ${
           isAlarmActive
-            ? getAlarmColor()
+            ? bgColorClass
             : "bg-muted"
-        }`}
+        } transition-colors duration-300`}
       >
         <p className="text-sm text-muted-foreground">Ad Space</p>
       </div>
@@ -194,24 +200,22 @@ export default function DigitalClock({
         >
           <div className="margin-auto relative">
             <div
-              className={`time-display font-bold leading-none ${
-                isAlarmActive ? "text-destructive-foreground" : "text-foreground"
-              }`}
+              className={`time-display font-bold leading-none ${textColorClass} transition-colors duration-300`}
               style={{
                 fontSize: "20vw",
                 lineHeight: "1",
+                fontFamily: fontFamily,
               }}
             >
               {timeDisplay}
             </div>
             {periodDisplay && (
               <div
-                className={`period-display absolute -bottom-4 right-0 transform -translate-y-1/4 translate-x-1/4 ${
-                  isAlarmActive ? "text-destructive-foreground" : "text-foreground"
-                }`}
+                className={`period-display absolute -bottom-4 right-0 transform -translate-y-1/4 translate-x-1/4 ${textColorClass} transition-colors duration-300`}
                 style={{
                   fontSize: "3vw",
                   lineHeight: "1",
+                  fontFamily: fontFamily,
                 }}
               >
                 {periodDisplay}
@@ -221,7 +225,8 @@ export default function DigitalClock({
 
           {showDate && (
             <div
-              className={`text-[2vw] mt-4 ${isAlarmActive ? "text-destructive-foreground" : "text-foreground"}`}
+              className={`text-[2vw] mt-4 ${textColorClass} transition-colors duration-300`}
+              style={{ fontFamily: fontFamily }}
             >
               {formatDate(time)}
             </div>
@@ -229,12 +234,12 @@ export default function DigitalClock({
 
           {/* Alarm indicators */}
           {isAlarmSet && !isAlarmActive && (
-            <div className="absolute top-4 right-4 bg-primary text-primary-foreground px-3 py-1 rounded-full text-sm">
-              Alarm set for {alarmTime}
+            <div className="absolute top-4 right-4 bg-primary text-primary-foreground px-3 py-1 rounded-full text-sm shadow-md">
+              Alarm set for {alarmTime?.substring(0, 5)}
             </div>
           )}
           {isAlarmActive && (
-            <div className="absolute top-4 right-4 bg-destructive text-destructive-foreground px-3 py-1 rounded-full text-sm">
+            <div className="absolute top-4 right-4 bg-destructive text-destructive-foreground px-3 py-1 rounded-full text-sm animate-pulse shadow-md">
               ALARM ACTIVE
             </div>
           )}
@@ -244,8 +249,8 @@ export default function DigitalClock({
       {/* Bottom ad banner */}
       <div
         className={`h-[10vh] flex items-center justify-center ${
-          isAlarmActive ? getAlarmColor() : "bg-muted"
-        }`}
+          isAlarmActive ? bgColorClass : "bg-muted"
+        } transition-colors duration-300`}
       >
         <p className="text-sm text-muted-foreground">Ad Space</p>
       </div>

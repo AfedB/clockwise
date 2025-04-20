@@ -40,8 +40,8 @@
     --chart-5: 27 87% 67%;
 
     --radius: 0.5rem;
-    --alarm-color-light: rgba(255, 0, 0, 1);
-    --alarm-color-dark: rgba(220, 38, 38, 1);
+    --alarm-opacity: 0;
+    --current-alarm-color: hsl(0, 84.2%, 60.2%); /* rouge en mode clair */
   }
 
   .dark {
@@ -79,6 +79,8 @@
     --chart-3: 30 80% 55%;
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
+    
+    --current-alarm-color: hsl(0, 62.8%, 30.6%); /* rouge en mode sombre */
   }
 }
 
@@ -103,16 +105,25 @@
   right: 0;
   bottom: 0;
   pointer-events: none;
-  transition: opacity 0.5s ease, background-color 0.5s ease; /* Allongez un peu la transition */
+  transition: opacity 0.5s ease, background-color 0.5s ease;
   opacity: var(--alarm-opacity, 0);
   background-color: var(--current-alarm-color);
-  z-index: 5; /* Assurez-vous qu'il est au-dessus des autres éléments mais en dessous du contenu principal */
+  z-index: 5;
 }
 
-[data-theme='light'] .alarm-overlay::before {
-  background-color: rgba(255, 0, 0, 1);
+/* Ajout d'une classe pour appliquer l'effet de pulsation quand l'alarme est active */
+@keyframes alarm-pulse {
+  0% {
+    opacity: var(--alarm-opacity, 0);
+  }
+  50% {
+    opacity: calc(var(--alarm-opacity, 0) * 1.8);
+  }
+  100% {
+    opacity: var(--alarm-opacity, 0);
+  }
 }
 
-[data-theme='dark'] .alarm-overlay::before {
-  background-color: rgba(220, 38, 38, 1);
+.alarm-active.alarm-overlay::before {
+  animation: alarm-pulse 1.2s infinite;
 }
