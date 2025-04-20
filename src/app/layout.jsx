@@ -4,6 +4,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { cn } from "@/lib/utils";
 import ClientLayout from "./client-layout";
+import { Analytics } from "@vercel/analytics/react";
 
 const chivoMono = Chivo_Mono({
   subsets: ["latin"],
@@ -70,6 +71,7 @@ export default function RootLayout({ children }) {
           disableTransitionOnChange
         >
           <ClientLayout>{children}</ClientLayout>
+          <Analytics />
         </ThemeProvider>
       </body>
     </html>
